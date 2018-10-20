@@ -1,0 +1,6 @@
+4 points
+///: schema
+1, RecordID
+2, Continuous
+3, Discrete
+4, Class
