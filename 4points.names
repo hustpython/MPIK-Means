@@ -2,5 +2,5 @@
 ///: schema
 1, RecordID
 2, Continuous
-3, Discrete
+3, Continuous
 4, Class

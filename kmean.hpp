@@ -4,6 +4,7 @@
 #include <boost/any.hpp>
 #include <boost/random.hpp>
 #include <vector>
+#include <map>
 #include "dataset.hpp"
 #include "types.hpp"
 #include "distance.hpp"
