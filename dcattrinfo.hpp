@@ -3,11 +3,13 @@
 #include <vector>
 #include "attrinfo.hpp"
 #include<boost/variant/get.hpp>
+#include "exceptions.hpp"
 //////////////////////离散型数据
 class DAttrInfo: public  AttrInfo //继承AttrInfo
 {
     public: 
         DAttrInfo(const std::string& name);//构造函数，传入属性字符串
+        const std::string& int_to_str(Size i) const;
         Size num_values() const;//获取长度
         Size get_d_val(const AttrValue&) const; //接口定义
         void set_d_val(AttrValue& , Size)const;//接口定义
@@ -54,7 +56,10 @@ Size DAttrInfo::add_value(const std::string& s,
             }
         } 
     }
-
+const std::string& DAttrInfo::int_to_str(Size i) const {
+        ASSERT(i>=0 && i<_values.size(), "index out of range");
+        return _values[i];
+    }
 Real DAttrInfo::distance(const AttrValue& av1, 
                              const AttrValue& av2) const { 
         if(is_unknown(av1) && is_unknown(av2)) { 

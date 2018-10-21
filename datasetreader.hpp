@@ -16,19 +16,20 @@ class DatasetReader
 {
     public: 
         DatasetReader(const std::string& fileName);//构造函数,传入文件名
-        void fill(boost::shared_ptr<Dataset>& ds);//将文件中的数据解析进dataset
+        void fill(boost::shared_ptr<Dataset>& ds);//将文件中的数据解析进dataset,
+                                                  //对fillData的补充(对没有recordID的数据进行记录)
 
     private: 
-        void createSchema();//创建schema
-        void fillData();
-        boost::shared_ptr<Record> createRecord(const std::vector<std::string> &val);
-        std::vector<std::string> split(const std::string&);
-        std::string _fileName;
-        Size _labelColumn; 
-        Size _idColumn; 
-        Size _numColumn;
-        boost::shared_ptr<Schema> _schema;
-        boost::shared_ptr<Dataset> _ds;
+        void createSchema();//创建schema,读取.names文件创建schema的标签信息
+        void fillData();//读取data文件，进行填充数据
+        boost::shared_ptr<Record> createRecord(const std::vector<std::string> &val);//将每一行的数据进行填充
+        std::vector<std::string> split(const std::string&);//分割数据
+        std::string _fileName;//文件名变量
+        Size _labelColumn; //标签所在列的index
+        Size _idColumn; //id所在列的index
+        Size _numColumn;//数组总行数
+        boost::shared_ptr<Schema> _schema;//shcema指针
+        boost::shared_ptr<Dataset> _ds;//dataset指针
 };
 /////////////////
 DatasetReader::DatasetReader(const std::string& fileName)
@@ -63,8 +64,9 @@ void DatasetReader::fillData() {
             _ds->add(pr); 
         }
     }
-boost::shared_ptr<Record> DatasetReader::createRecord(
+boost::shared_ptr<Record> DatasetReader::createRecord(//record可以通过[]访问属性的值,可以通过idvalue,labelvalue访问id和label的值
         const std::vector<std::string>& val) { 
+        //Record 继承自模板Container 而且类型是attrValue
         boost::shared_ptr<Record> rec = boost::shared_ptr<Record>(new Record(_schema));
         std::string label, id;
         Size j = 0;
@@ -106,7 +108,7 @@ boost::shared_ptr<Record> DatasetReader::createRecord(
         return rec;
     }
 
-    void DatasetReader::createSchema() {
+    void DatasetReader::createSchema() {//将列为attr的加入其中，_schema->size()为attr属性个数
         size_t ind = _fileName.find_last_of('.');
         std::string schemaFile = 
             _fileName.substr(0,ind+1) + "names"; 

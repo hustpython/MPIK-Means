@@ -8,6 +8,7 @@ int main()
     DatasetReader *p = new DatasetReader("4points.data");
     boost::shared_ptr<Dataset> ds;
     p->fill(ds);
+
     cout<<setw(10)<<left<<"RecordID";
         for(Size j=0; j<ds->num_attr(); ++j) {
             stringstream ss;
