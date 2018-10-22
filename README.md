@@ -99,6 +99,7 @@ sh bootstrap.sh
 ### 2.2 boost的小技巧
 #### Smart Pointers
 >在Boost中，智能指针是存储指向动态分配对象的指针的对象。智能指针非常有用，因为它们确保正确销毁动态分配的对象，即使在异常情况下也是如此。事实上，智能指针被视为拥有指向的对象，因此负责在不再需要时删除对象。Boost智能指针库提供了六个智能指针类模板。表给出了这些类模板的描述。本实验中将大量使用智能指针。
+<div align=center>
 
 | 类   |      描述      | 
 |----------|:-------------:|
@@ -108,6 +109,8 @@ sh bootstrap.sh
 |shared_array|多个指针共享的数组所有权| 
 |weak_ptr|shared_ptr拥有的对象的非拥有观察者| 
 |intrusive_ptr|具有嵌入引用计数的对象的共享所有权。| 
+
+</div>
 
 #### Variant versus Any
 Boost Variant类模板是一个安全通用的联合容器，和std::vector不同储存单个类型的多个值，variant可以储存多个类型的单个值，本实验中将使用variant储存双精度和整数类型来储存不同类型的数据。
@@ -139,7 +142,7 @@ Tokenizer提供了一种灵活而简单的方法通过分割符（如:" , ")将�
 
  [A] [flexible,] [easy] [tokenizer][A] [flexible] [] [easy][tokenizer]
 
-###2.3 K-Means算法思路
+### 2.3 K-Means算法思路
 <div align=center>
 
 ![](doc/lct1.png)
