@@ -145,9 +145,11 @@ Tokenizer提供了一种灵活而简单的方法通过分割符（如:" , ")将�
 ### 2.3 K-Means算法思路
 
 <center>
+
 <img src="doc/lct1.png" width="40%" height="40%" />
 
 Ｋ-Means算法流程图
+
 </center>
 
 
