@@ -146,7 +146,7 @@ Tokenizer提供了一种灵活而简单的方法通过分割符（如:" , ")将�
 
 <center>
 
-<img src="doc/lct1.png" width="40%" height="40%" />
+<img src="doc/lct1.png" width="30%" height="30%" />
 
 Ｋ-Means算法流程图
 
