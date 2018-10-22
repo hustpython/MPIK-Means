@@ -143,11 +143,12 @@ Tokenizer提供了一种灵活而简单的方法通过分割符（如:" , ")将�
  [A] [flexible,] [easy] [tokenizer][A] [flexible] [] [easy][tokenizer]
 
 ### 2.3 K-Means算法思路
-<div align=center>
 
-![](doc/lct1.png)
+<center>
+<img src="doc/lct1.png" width="40%" height="40%" />
 
-</div>
+Ｋ-Means算法流程图
+</center>
 
 
 ## 三，实验步骤
