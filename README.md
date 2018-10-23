@@ -165,4 +165,31 @@ sh bootstrap.sh
 
 
 ## 三，实验步骤
+### 3.1 数据集的构建
+数据对于一个聚类算法来说非常重要,在这里我们将一个数据集描述为一个记录(record),一个记录由一些属性(Attribute)表征.因此自然而然将依次建立attributes,records,最后是数据集datasets.
 
+AttrValue类有一个私有变量,有两个友元函数,一个公有成员函数.
+
+<div align=center>
+
+![](doc/attrvalue.png)
+
+</div>
+_value是一个variant类型变量,它可以存储一个双精度或无符号整形的数据,分类数据用无符号整形数据表示.
+AttrValue类自身无法存储或获取数据.它的两个友元函数可以获取和修改数据_value.
+
+```c++
+class AttrValue 
+{
+    public:
+       friend class DAttrInfo;
+       friend class CAttrInfo;
+       typedef boost::variant<Real,Size> value_type;
+       AttrValue();
+    private:
+       value_type _value;
+};
+
+inline AttrValue::AttrValue(): _value(Null<Size>()) {
+    }
+```
