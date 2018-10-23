@@ -451,6 +451,8 @@ class Schema:public Container<boost::shared_ptr<AttrInfo> >
 |r2|-2.1|B|1.5|2
 |r3|1.5|A|-0.1|1
 
+表3 数据实例
+
 那么我们如何将以上数据用我们的dataset类来表示呢?
 
 ```c++
