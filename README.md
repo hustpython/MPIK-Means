@@ -120,7 +120,7 @@ sh bootstrap.sh
 </div>
 
 #### Variant versus Any
->Boost Variant类模板是一个安全通用的联合容器，和std::vector不同储存单个类型的多个值，variant可以储存多个类型的单个值，本实验中将使用variant储存双精度和整数类型来储存不同类型的数据。
+>Boost Variant类模板是一个安全通用的联合容器，和std::vector不同储存单个类型的多个值，variant可以储存多个类型的单个值，本实验中将使用variant储存双精度和整数类型来表示不同类型的数据。
 
 与variant一样，Boost any是另一个异构容器。虽然Boost anys有许多与Boost variant相同的功能。
 根据Boost库文档，Boost variant比Boost any具有以下优势：
@@ -138,7 +138,7 @@ sh bootstrap.sh
 #### Tokenizer
 >Tokenizer提供了一种灵活而简单的方法通过分割符（如:" , ")将一个完整的string分隔开。
 
- 字符串为：”A flexible , easy tokenizer“
+ 字符串为：”A flexible,easy tokenizer“
 
  如果通过","分割,则结果为：
 
@@ -147,7 +147,7 @@ sh bootstrap.sh
 以" " 为分隔符:
 分割结果为：
 
- [A] [flexible,] [easy] [tokenizer][A] [flexible] [] [easy][tokenizer]
+ [A] [flexible,] [easy] [tokenizer]
 
 ### 2.3 K-Means算法思路
 
