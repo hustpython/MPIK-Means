@@ -106,7 +106,7 @@ sh bootstrap.sh
 ### 2.2 boost的小技巧
 #### Smart Pointers
 >在Boost中，智能指针是存储指向动态分配对象的指针的对象。智能指针非常有用，因为它们确保正确销毁动态分配的对象，即使在异常情况下也是如此。事实上，智能指针被视为拥有指向的对象，因此负责在不再需要时删除对象。Boost智能指针库提供了六个智能指针类模板。表给出了这些类模板的描述。本实验中将大量使用智能指针。
-<div align=center>
+
 
 | 类   |      描述      | 
 |:----------:|:-------------:|
@@ -118,8 +118,6 @@ sh bootstrap.sh
 |intrusive_ptr|具有嵌入引用计数的对象的共享所有权。| 
 
 表1 智能指针类型简介
-
-</div>
 
 #### Variant versus Any
 >Boost Variant类模板是一个安全通用的联合容器，和std::vector不同储存单个类型的多个值，variant可以储存多个类型的单个值，本实验中将使用variant储存双精度和整数类型来表示不同类型的数据。
@@ -291,7 +289,6 @@ class DAttrInfo: public  AttrInfo //继承AttrInfo
 };
 ```
 add_value 是一个将字符串转化为无符号整形数据的重要函数,返回值为该字符所表示的整形,并将为出现的字符添加进_values.
-<center>
 
 (a)
 | Record   |      Attribute      | AttrValue
@@ -311,7 +308,6 @@ add_value 是一个将字符串转化为无符号整形数据的重要函数,返
 
 表2 DAttrInfo的一个具体实例
 
-</center>
 
 通过上面表格中我们可以看到一组字符类型的数据被存储为该字符串所在的inex,如果该字符串第一次出现则为上一个字符串的index+1.这样相同的字符串都被转化为唯一的无符号整形._value这个辅助变量可以帮助实现这一功能.
 
