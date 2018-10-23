@@ -291,7 +291,7 @@ class DAttrInfo: public  AttrInfo //继承AttrInfo
 };
 ```
 add_value 是一个将字符串转化为无符号整形数据的重要函数,返回值为该字符所表示的整形,并将为出现的字符添加进_values.
-<div align=center>
+<center>
 
 (a)
 | Record   |      Attribute      | AttrValue
@@ -311,7 +311,7 @@ add_value 是一个将字符串转化为无符号整形数据的重要函数,返
 
 表2 DAttrInfo的一个具体实例
 
-</div>
+</center>
 
 通过上面表格中我们可以看到一组字符类型的数据被存储为该字符串所在的inex,如果该字符串第一次出现则为上一个字符串的index+1.这样相同的字符串都被转化为唯一的无符号整形._value这个辅助变量可以帮助实现这一功能.
 
