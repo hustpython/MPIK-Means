@@ -290,7 +290,6 @@ class DAttrInfo: public  AttrInfo //继承AttrInfo
 ```
 add_value 是一个将字符串转化为无符号整形数据的重要函数,返回值为该字符所表示的整形,并将为出现的字符添加进_values.
 
-(a)
 | Record   |      Attribute      | AttrValue
 |:----------:|:-------------:|:-------------:|
 |1|"A"|0|
@@ -299,7 +298,6 @@ add_value 是一个将字符串转化为无符号整形数据的重要函数,返
 |4|"C"|2|
 |5|"B"|1|
 
-(b)
 | Record   |      Attribute      
 |:----------:|:-------------:|
 |0|"A"
