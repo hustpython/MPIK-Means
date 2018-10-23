@@ -33,7 +33,7 @@ Linux 命令行终端，打开后会进入 Bash 环境，可以用来执行 Linu
 </div>
 
 
-### 1.7，项目结构与框架
+### 1.7 项目结构与框架
 项目的整个文件目录:
 ```
 ├── clusters
@@ -157,13 +157,13 @@ sh bootstrap.sh
 
 ### 2.3 K-Means算法思路
 
-<center>
+<div align=center>
 
 <img src="doc/lct1.png" width="30%" height="30%" />
 
 图2 Ｋ-Means算法流程图
 
-</center>
+</div>
 
 
 ## 三，实验步骤
@@ -172,7 +172,7 @@ sh bootstrap.sh
 数据对于一个聚类算法来说非常重要,在这里我们将一个数据集描述为一个记录(record),一个记录由一些属性(Attribute)表征.因此自然而然将依次建立attributes,records,最后是数据集datasets.
 <div align=center>
 
-<img src="doc/attrvalue.png" width="50%" height="30%" />
+<img src="doc/attrvalue.png" width="45%" height="40%" />
 
 图3 数据类UML关系图
 
