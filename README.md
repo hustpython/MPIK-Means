@@ -26,7 +26,9 @@ Linux 命令行终端，打开后会进入 Bash 环境，可以用来执行 Linu
 
 <div align=center>
 
-<img src="doc/res1.png" width="30%" height="30%" />
+<img src="doc/res1.png" width="50%" height="50%" />
+
+图1 输出文件图
 
 </div>
 
@@ -159,7 +161,7 @@ sh bootstrap.sh
 
 <img src="doc/lct1.png" width="30%" height="30%" />
 
-图1 Ｋ-Means算法流程图
+图2 Ｋ-Means算法流程图
 
 </center>
 
@@ -170,9 +172,9 @@ sh bootstrap.sh
 数据对于一个聚类算法来说非常重要,在这里我们将一个数据集描述为一个记录(record),一个记录由一些属性(Attribute)表征.因此自然而然将依次建立attributes,records,最后是数据集datasets.
 <div align=center>
 
-<img src="doc/attrvalue.png" width="30%" height="30%" />
+<img src="doc/attrvalue.png" width="50%" height="30%" />
 
-数据类UML关系图
+图3 数据类UML关系图
 
 </div>
 
@@ -393,5 +395,7 @@ Record和Schema是继承Container类的两个重要的类,他们之间的关系�
 <div align=center>
 
 <img src="doc/record.png" width="30%" height="30%" />
+
+图4 Container关系图
 
 </div>
