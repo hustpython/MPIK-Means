@@ -22,7 +22,14 @@ Linux 命令行终端，打开后会进入 Bash 环境，可以用来执行 Linu
 
 ### 1.6 效果图
 
-最终实现的效果是这样的:
+输出结果文件
+
+<div align=center>
+
+![](doc/res1.png)
+
+</div>
+
 
 ### 1.7，项目结构与框架
 项目的整个文件目录:
@@ -113,7 +120,7 @@ sh bootstrap.sh
 </div>
 
 #### Variant versus Any
-Boost Variant类模板是一个安全通用的联合容器，和std::vector不同储存单个类型的多个值，variant可以储存多个类型的单个值，本实验中将使用variant储存双精度和整数类型来储存不同类型的数据。
+>Boost Variant类模板是一个安全通用的联合容器，和std::vector不同储存单个类型的多个值，variant可以储存多个类型的单个值，本实验中将使用variant储存双精度和整数类型来储存不同类型的数据。
 
 与variant一样，Boost any是另一个异构容器。虽然Boost anys有许多与Boost variant相同的功能。
 根据Boost库文档，Boost variant比Boost any具有以下优势：
@@ -129,7 +136,7 @@ Boost Variant类模板是一个安全通用的联合容器，和std::vector不�
 3,,,,,,
 
 #### Tokenizer
-Tokenizer提供了一种灵活而简单的方法通过分割符（如:" , ")将一个完整的string分隔开。
+>Tokenizer提供了一种灵活而简单的方法通过分割符（如:" , ")将一个完整的string分隔开。
 
  字符串为：”A flexible , easy tokenizer“
 
