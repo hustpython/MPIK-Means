@@ -52,6 +52,7 @@ Size DAttrInfo::add_value(const std::string& s,
             if(bAllowDuplicate) {
                 return ind;
             } else {
+                FAIL("value "<<s<<" already exists");
                 return Null<Size>();
             }
         } 

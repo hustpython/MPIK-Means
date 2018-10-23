@@ -109,14 +109,14 @@ sh bootstrap.sh
 <div align=center>
 
 | 类   |      描述      | 
-|----------|:-------------:|
+|:----------:|:-------------:|
 | scoped_ptr |  单个对象的简单唯一所有权,不可复制. |
 | scoped_array |    数组的简单唯一所有权。不可复制   |  
 | shared_ptr | 对象所有权在多个指针之间共享 |  
 |shared_array|多个指针共享的数组所有权| 
 |weak_ptr|shared_ptr拥有的对象的非拥有观察者| 
 |intrusive_ptr|具有嵌入引用计数的对象的共享所有权。| 
-
+表1 智能指针类型简介
 </div>
 
 #### Variant versus Any
@@ -165,31 +165,231 @@ sh bootstrap.sh
 
 
 ## 三，实验步骤
+接下来将具体实践各个类,会给出每一个类的声明并解释其成员函数和成员变量以及相关联类之间的继承关系和逻辑关系.涉及到重要的成员函数的实现会给出其定义代码,一些普通的成员函数的源码可以到下载的源文件中查看,里面也会有详细的注解.
 ### 3.1 数据集的构建
 数据对于一个聚类算法来说非常重要,在这里我们将一个数据集描述为一个记录(record),一个记录由一些属性(Attribute)表征.因此自然而然将依次建立attributes,records,最后是数据集datasets.
-
-AttrValue类有一个私有变量,有两个友元函数,一个公有成员函数.
-
 <div align=center>
 
 ![](doc/attrvalue.png)
 
+数据类UML关系图
+
 </div>
+
+#### 3.1.1 AttrValue类
+
+AttrValue类有一个私有变量,有两个友元函数,一个公有成员函数.
 _value是一个variant类型变量,它可以存储一个双精度或无符号整形的数据,分类数据用无符号整形数据表示.
 AttrValue类自身无法存储或获取数据.它的两个友元函数可以获取和修改数据_value.
 
 ```c++
+//source:datasets.attrinfo.hpp
 class AttrValue 
 {
     public:
-       friend class DAttrInfo;
-       friend class CAttrInfo;
-       typedef boost::variant<Real,Size> value_type;
+       friend class DAttrInfo;//友元函数可以访问_value
+       friend class CAttrInfo;//友元函数可以访问_value
+       typedef boost::variant<Real,Size> value_type;//可存储双精度和无符号整形数据
        AttrValue();
     private:
        value_type _value;
 };
 
 inline AttrValue::AttrValue(): _value(Null<Size>()) {
+    }//构造函数,将_value初始化为Null<Size>(定义在utillities/null.hpp中)
+```
+#### 3.1.2 AttrInfo类
+AttrInfo是一个基类,包括了许多虚函数和纯虚函数.这些函数都将在它的派生类中具体实现,基类中仅进行声明和简单定义.
+```c++
+//source:datasets.attrinfo.hpp
+//三种数据类型:未知型,连续型(双精度),离散型(无符号整形)
+enum AttrType 
+{
+    Unknow,
+    Continuous,
+    Discrete
+};
+
+class DAttrInfo;
+class CAttrInfo;
+class AttrInfo 
+{
+public:
+  AttrInfo(const std::string &name,AttrType type);//每一栏的属性名(id,attr,label,...)和该属性的数据类型(离散或连续)
+  virtual ~AttrInfo(){}//虚析构函数
+  std::string &name();//返回标签
+  AttrType type() const;//返回数据类型
+  virtual Real distance(const AttrValue&,const AttrValue&) const = 0;
+
+  virtual void set_d_val(AttrValue&, Size) const;//AttrValue赋值;适用于DAttrInfo
+  virtual Size get_d_val(const AttrValue&) const;//获取_value
+  virtual void set_c_val(AttrValue&, Real) const;//AttrValue赋值;适用于CAttrInfo
+  virtual Real get_c_val(const AttrValue&) const;//获取_value
+  virtual bool can_cast_to_d() const;//布尔值,对于DAttrInfo类来说其返回值为true,相反为false.在基类的声明中全部初始化为false.
+  virtual bool can_cast_to_c() const;
+  virtual DAttrInfo& cast_to_d();//返回DAttrInfo本身
+  virtual bool is_unknown(const AttrValue&) const = 0;
+  virtual void set_unknown(AttrValue&) const = 0;
+private:
+   std::string _name;
+   AttrType _type;
+};
+```
+#### 3.1.3 CAttrInfo类和DAttrInfo类
+CAttrInfo主要是用来表示连续型数据的一些属性和方法.有两个成员变量:_min和_max.表示最小值和最大值属性,在初始化时都将设置为```Null<Size>``` .这两个属性将在归一化的时候用到.CAttrInfo将会继承AttrInfo的一些函数,并且重新定义.
+
+```c++
+//source:datasets/dcattrinfo.hpp
+class CAttrInfo: public AttrInfo 
+{
+    public: 
+      CAttrInfo(const std::string& name);//构造函数
+      Real distance(const AttrValue&,const AttrValue&)const;//两个距离
+      void set_c_val(AttrValue &, Real) const;
+      void set_min(Real);//设置最小值
+      void set_max(Real);//设置最大值
+      Real get_min() const;//获取最小值
+      Real get_max() const;//获取最大值
+      Real get_c_val(const AttrValue&) const;
+      bool is_unknown(const AttrValue&) const;
+      bool can_cast_to_c() const;
+      void set_unknown(AttrValue&) const;
+    protected:
+      Real _min;
+      Real _max;
+};
+CAttrInfo::CAttrInfo(const std::string& name)
+    : AttrInfo(name, Continuous) { 
+        _min = Null<Real>();
+        _max = Null<Real>();
     }
+
+```
+DAttrInfo类有一个私有变量_values,它是一个string类型的vector,用来存储一些离散的字符串.在DAttrInfo对象中所有的离散值都将由字符串转化为唯一的无符号整形.
+```c++
+class DAttrInfo: public  AttrInfo //继承AttrInfo
+{
+    public: 
+        DAttrInfo(const std::string& name);//构造函数，传入属性字符串
+        const std::string& int_to_str(Size i) const;
+        Size num_values() const;//获取长度
+        Size get_d_val(const AttrValue&) const; //接口定义
+        void set_d_val(AttrValue& , Size)const;//接口定义
+        Size add_value(const std::string&, 
+                bool bAllowDuplicate = true);//将一组离散值加入到_values中,比如“X,X,Y,Z"，
+                                                //则values=[X,Y,Z],对应的二进制数字为[0,0,1,2]
+                                                //对于属性值，则可以重复，但对于id则具有唯一性，不能重复
+        DAttrInfo& cast_to_d();
+        Real distance(const AttrValue&, const AttrValue&) const; //比较两个离散型变量的距离   
+        bool is_unknown(const AttrValue& av) const;//值有缺省  
+        bool can_cast_to_d() const;                           
+        void set_unknown(AttrValue&) const;
+    protected:
+        std::vector<std::string> _values;
+};
+```
+add_value 是一个将字符串转化为无符号整形数据的重要函数,返回值为该字符所表示的整形,并将为出现的字符添加进_values.
+<div align=center>
+
+(a)
+| Record   |      Attribute      | AttrValue
+|:----------:|:-------------:|:-------------:|
+|1|"A"|0|
+|2|"B"|1|
+|3|"A"|0|
+|4|"C"|2|
+|5|"B"|1|
+
+(b)
+| Record   |      Attribute      
+|:----------:|:-------------:|
+|0|"A"
+|1|"B"
+|2|"C"
+
+标2 DAttrInfo的一个具体实例
+</div>
+
+通过上面表格中我们可以看到一组字符类型的数据被存储为该字符串所在的inex,如果该字符串第一次出现则为上一个字符串的index+1.这样相同的字符串都被转化为唯一的无符号整形._value这个辅助变量可以帮助实现这一功能.
+
+```c++
+Size DAttrInfo::add_value(const std::string& s,
+        bool bAllowDuplicate) {
+        Size ind = Null<Size>();
+        //如果该字符串已经出现,则返回该字符串在_values中的index
+        for(Size i=0;i<_values.size();++i) {
+            if(_values[i] == s) {
+                ind = i;
+                break;
+            }
+        }
+//如果未出现,则返回_values的大小-1.
+//同时对于不允许重复字符串的数据,如ID,当出现重复字符串时则会错误提示.
+        if(ind == Null<Size>()) {
+            _values.push_back(s);
+            return _values.size()-1;
+        } else {
+            if(bAllowDuplicate) {
+                return ind;
+            } else {
+                FAIL("value "<<s<<" already exists");
+                return Null<Size>();
+            }
+        } 
+    }
+```
+
+
+这里需要看一下distance这个函数的定义,它返回的是一个双精度类型数值.如果传入的两个数据类型为Unknow则返回为0.0,其中一个为Unknow则为1,对于两个双精度类型的数据返回其差值.
+```c++
+Real CAttrInfo::distance(const AttrValue& av1,const AttrValue& av2) const {
+        if(is_unknown(av1) && is_unknown(av2)){
+	    return 0.0;
+	}
+        if(is_unknown(av1) ^ is_unknown(av2)){
+	    return 1.0;
+        }
+        return boost::get<Real>(av1._value) - 
+               boost::get<Real>(av2._value);
+    }
+```
+对于离散型数据,两个离散数据之间的距离定义也会不同,这里主要是考虑到离散型数据都转化为相差为1的整形,所以只要两个DAttrInfo的值不同则距离就为1.0,所以在含有离散型和连续型数据的混合数据中连续型数据要进行归一化处理以满足量纲统一.
+
+```c++
+Real DAttrInfo::distance(const AttrValue& av1, 
+                             const AttrValue& av2) const { 
+        if(is_unknown(av1) && is_unknown(av2)) { 
+            return 0.0; //如果两个值都有缺省,则距离为0
+        }
+        if(is_unknown(av1) ^ is_unknown(av2)) { 
+            return 1.0;//如果有一个值缺省,距离为1
+        }
+        if(boost::get<Size>(av1._value) == 
+           boost::get<Size>(av2._value) ) {
+            return 0.0;//如果两个值相等，则无差距
+        } else {
+            return 1.0;//否则为最大距离1
+        } 
+    }
+```
+#### 3.1.4 Container类
+
+Container类是一个基类模板
+
+```c++
+template <typename T>
+class Container//基类模板
+{
+    public:
+       typedef typename std::vector<T>::iterator iterator;
+       iterator begin();
+       iterator end();
+       void erase(const T& val);
+       void add(const T&val);//将val添加到向量中
+       Size size() const; //返回_data的长度
+       T& operator[](Size i);//下标索引，建立Schema与data的关系
+    protected:
+        ~Container(){}
+        std::vector<T>_data;
+};
 ```
