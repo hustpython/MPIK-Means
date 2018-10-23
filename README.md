@@ -26,7 +26,7 @@ Linux 命令行终端，打开后会进入 Bash 环境，可以用来执行 Linu
 
 <div align=center>
 
-![](doc/res1.png)
+<img src="doc/res1.png" width="30%" height="30%" />
 
 </div>
 
@@ -170,7 +170,7 @@ sh bootstrap.sh
 数据对于一个聚类算法来说非常重要,在这里我们将一个数据集描述为一个记录(record),一个记录由一些属性(Attribute)表征.因此自然而然将依次建立attributes,records,最后是数据集datasets.
 <div align=center>
 
-![](doc/attrvalue.png)
+<img src="doc/attrvalue.png" width="30%" height="30%" />
 
 数据类UML关系图
 
