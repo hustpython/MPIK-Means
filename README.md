@@ -161,7 +161,7 @@ sh bootstrap.sh
 
 <img src="doc/lct1.png" width="30%" height="30%" />
 
-Ｋ-Means算法流程图
+图1 Ｋ-Means算法流程图
 
 </center>
 
@@ -377,8 +377,7 @@ Real DAttrInfo::distance(const AttrValue& av1,
 ```
 #### 3.1.4 Container类
 
-Container类是一个基类模板
-
+Container类是一个基类模板,有一个vector的成员变量_data.add函数可以将T类型的数据添加进入_data,同样erase可以删除数据.[]是一个操作符重载,返回索引i对应的数据.
 ```c++
 template <typename T>
 class Container//基类模板
@@ -396,3 +395,9 @@ class Container//基类模板
         std::vector<T>_data;
 };
 ```
+Record和Schema是继承Container类的两个重要的类,他们之间的关系如下:
+<div align=center>
+
+<img src="doc/record.png" width="30%" height="30%" />
+
+</div>
