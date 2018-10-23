@@ -167,7 +167,7 @@ sh bootstrap.sh
 
 
 ## 三，实验步骤
-接下来将具体实践各个类,会给出每一个类的声明并解释其成员函数和成员变量以及相关联类之间的继承关系和逻辑关系.涉及到重要的成员函数的实现会给出其定义代码,一些普通的成员函数的源码可以到下载的源文件中查看,里面也会有详细的注解.
+接下来将具体实践各个类,会给出每一个类的声明并解释其成员函数和数据成员以及相关联类之间的继承关系和逻辑关系.涉及到重要的成员函数的实现会给出其定义代码,一些普通的成员函数的源码可以到下载的源文件中查看,里面也会有详细的注解.
 ### 3.1 数据集的构建
 数据对于一个聚类算法来说非常重要,在这里我们将一个数据集描述为一个记录(record),一个记录由一些属性(Attribute)表征.因此自然而然将依次建立attributes,records,最后是数据集datasets.
 <div align=center>
@@ -238,7 +238,7 @@ private:
 };
 ```
 #### 3.1.3 CAttrInfo类和DAttrInfo类
-CAttrInfo主要是用来表示连续型数据的一些属性和方法.有两个成员变量:_min和_max.表示最小值和最大值属性,在初始化时都将设置为```Null<Size>``` .这两个属性将在归一化的时候用到.CAttrInfo将会继承AttrInfo的一些函数,并且重新定义.
+CAttrInfo主要是用来表示连续型数据的一些属性和方法.有两个数据成员:_min和_max.表示最小值和最大值属性,在初始化时都将设置为```Null<Size>``` .这两个属性将在归一化的时候用到.CAttrInfo将会继承AttrInfo的一些函数,并且重新定义.
 
 ```c++
 //source:datasets/dcattrinfo.hpp
@@ -373,7 +373,7 @@ Real DAttrInfo::distance(const AttrValue& av1,
 ```
 #### 3.1.4 Container类
 
-Container类是一个基类模板,有一个vector的成员变量_data.add函数可以将T类型的数据添加进入_data,同样erase可以删除数据.[]是一个操作符重载,返回索引i对应的数据.
+Container类是一个基类模板,有一个vector的数据成员_data.add函数可以将T类型的数据添加进入_data,同样erase可以删除数据.[]是一个操作符重载,返回索引i对应的数据.
 ```c++
 template <typename T>
 class Container//基类模板
@@ -399,3 +399,59 @@ Record和Schema是继承Container类的两个重要的类,他们之间的关系�
 图4 Container关系图
 
 </div>
+
+Record继承带参数AttrValue的模板类Container,有四个私有数据成员_label,_data,id和_schema._data继承自父类.每一个Record类都有一个指向Schema类的共享指针,可以将类型为AttrValue的数据储存在_data中,同样每一个record都有一个label和id.
+```c++
+//source:clusters/record.hpp
+class Record:public Container<AttrValue>
+{
+    public: 
+      Record(const boost::shared_ptr<Schema>& schema);//构造函数
+      const boost::shared_ptr<Schema>& schema() const;
+      const AttrValue& labelValue() const;
+      const AttrValue& idValue() const;
+      AttrValue& labelValue();
+      AttrValue& idValue();
+      Size get_id() const;
+      Size get_label() const;
+    private: 
+        boost::shared_ptr<Schema> _schema;//通过_schema创建记录
+        AttrValue _label;
+        AttrValue _id;
+};
+
+```
+Schema类
+```c++
+class Record;
+class Schema:public Container<boost::shared_ptr<AttrInfo> >
+{
+    public:
+      virtual ~Schema(){}
+      const boost::shared_ptr<DAttrInfo>& labelInfo() const;//标签信息，整形
+      const boost::shared_ptr<DAttrInfo>& idInfo() const;//id信息，整形
+      boost::shared_ptr<DAttrInfo>& idInfo();//可以修改成员变量,_labelInfo
+      boost::shared_ptr<DAttrInfo>& labelInfo();//可以修改成员变量,_idInfo
+      void set_label(const boost::shared_ptr<Record>& r,const std::string& val);
+      //设置记录的label
+      void set_id(boost::shared_ptr<Record>& r,const std::string& val);
+      //设置记录的id
+    protected:
+      boost::shared_ptr<DAttrInfo> _labelInfo;
+      boost::shared_ptr<DAttrInfo> _idInfo;
+};
+```
+### 3.2 创建一个数据库实例
+>前面关于如何构建dataset相关类已经花了很多时间,下面就让我们实际操作如何创建一个具体的dataset.
+假设我们有这样的一组数据:
+
+|ID|Attr1|Attr2|Attr3|Label|
+|:---:|:---:|:---:|:---:|:---:|
+|r1|1.2|A|-0.5|1
+|r2|-2.1|B|1.5|2
+|r3|1.5|A|-0.1|1
+
+那么我们如何将以上数据用我们的dataset类来表示呢?
+
+
+
