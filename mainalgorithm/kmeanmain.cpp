@@ -9,7 +9,7 @@ using namespace boost::program_options;
 //编译:
 //mpic++ -o kmeantest kmeanmain.cpp -L/usr/local/lib -lboost_program_options -lboost_serialization
 //运行:
-//./kmeantest --datafile=../testdata/4points.data
+//./kmeantest --datafile=../testdata/600points.csv
 int main( int argc,char * argv[])
 {
     try
@@ -89,7 +89,7 @@ int main( int argc,char * argv[])
             avgiter += boost::any_cast<Size>(tmp.get("numiter"));
             error = boost::any_cast<Real>(tmp.get("error"));
             avgerror += error;
-            if(error>dMin)
+            if(error < dMin)
             {
                 //更新最小的error和最好的结果
                 dMin = error;
@@ -101,6 +101,26 @@ int main( int argc,char * argv[])
         double seconds = t.elapsed();
         //计算时间
         cout << "completed in "<<seconds<<" "<<"seconds"<<std::endl;
+        PClustering pc = boost::any_cast<PClustering>(Res.get("pc"));
+        std::cout<<pc<<std::endl;
+        std::cout<<"Number of runs: "<<numrun<<std::endl;
+        std::cout<<"Average number of iterations: "
+            <<avgiter<<std::endl;
+        std::cout<<"Average error: "<<avgerror<<std::endl;
+        std::cout<<"Best error: "<<dMin<<std::endl;
+
+        std::string prefix;
+        size_t ind = datafile.find_last_of('.');
+        if(ind != std::string::npos ) {
+            prefix = datafile.substr(0,ind);
+        } else {
+            prefix = datafile;
+        }
+        std::stringstream ss;
+        ss<<prefix<<"-kmean-k"<<numclust<<"-s"<<seed<<".txt";
+        pc.save(ss.str());
+
+        return 0;
     }
     catch(std::exception& e)
     {

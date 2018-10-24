@@ -2,7 +2,10 @@
 #define RECORD_H
 #include "../datasets/dcattrinfo.hpp"
 #include "../datasets/attrinfo.hpp"
+#include"../utilities/nnmap.hpp"
 #include<boost/shared_ptr.hpp>
+#include<fstream>
+#include<iomanip>
 ////////////////////////模板类
 template <typename T>
 class Container//基类模板
@@ -168,7 +171,7 @@ class CenterCluster : public Cluster
       CenterCluster(){}
       CenterCluster(const boost::shared_ptr<Record>& center);//构造函数传入一个record
       const boost::shared_ptr<Record>& center() const;//返回中心点的record,不可更改
-      boost::shared_ptr<Record>& center();//返回中心点1record,可更改   
+      //boost::shared_ptr<Record>& center();//返回中心点1record,可更改   
     protected: 
       boost::shared_ptr<Record>_center; //成员变量,中心点的record
 };
@@ -178,20 +181,26 @@ const boost::shared_ptr<Record>& CenterCluster::center()
         const {
         return _center;
     }
-boost::shared_ptr<Record>& CenterCluster::center()
-{
-    return _center;
-}
+// boost::shared_ptr<Record>& CenterCluster::center()
+// {
+//     return _center;
+// }
 //////////////////////////簇的集合//可能要删除一些成员函数
 class PClustering:public Container<boost::shared_ptr<Cluster> >  
 {
     public:
       PClustering();//构造函数
+      friend std::ostream& operator<<(std::ostream& os,
+                PClustering& pc);
       void removeEmptyClusters();
-        void createClusterID();
+      void createClusterID();
+      void save(const std::string& filename);
 
     private: 
+        void print(std::ostream &os);
         void calculate();
+        void crosstab();
+
         bool _bCalculated;
         Size _numclust;
         Size _numclustGiven;
@@ -199,11 +208,19 @@ class PClustering:public Container<boost::shared_ptr<Cluster> >
         std::vector<std::string> _clustLabel;
         std::vector<Size> _CM;
         std::vector<Size> _CMGiven;
+        iiiMapB _crosstab;
 
 };
 PClustering::PClustering(): _bCalculated(false),
         _numclustGiven(Null<Size>()) {
     }
+
+std::ostream& operator<<(std::ostream& os,
+            PClustering& pc) {
+        pc.print(os);
+        return os;
+    }
+
 void PClustering::removeEmptyClusters() {
         std::vector<boost::shared_ptr<Cluster> > 
             temp(_data.begin(), _data.end());
@@ -221,6 +238,73 @@ void PClustering::createClusterID() {
             _data[i]->set_id(i);
         }
     }
+
+void PClustering::print(std::ostream& os) {
+        calculate();
+
+        os<<"Clustering Summary:\n";
+        os<<"Number of clusters: "<<_numclust<<'\n';
+        for(Size i=0;i<_numclust;++i){
+            os<<"Size of Cluster "<<i<<": "<<_clustsize[i]<<'\n';
+        }
+        os<<'\n';
+        if (_numclustGiven != Null<Size>()){
+            os<<"Number of given clusters: "
+                <<_numclustGiven<<'\n';
+            os<<"Cross Tabulation:\n"; 
+            std::vector<Size> w;
+            w.push_back(13);
+            os<<std::setw(w[0])<<std::left<<"Cluster ID";
+            for(Size j=0;j<_numclustGiven;++j) {
+                w.push_back(_clustLabel[j].size()+3);
+                os<<std::setw(w[j+1])<<std::left<<_clustLabel[j];
+            }
+            os<<'\n';
+            for(Size i=0;i<_numclust;++i){
+                os<<std::setw(w[0])<<std::left<<i;
+                for(Size j=0;j<_numclustGiven;++j) {
+                    if(_crosstab.contain_key(i,j)){
+                        os<<std::setw(w[j+1])<<std::left
+                            <<_crosstab(i,j);
+                    } else {
+                        os<<std::setw(w[j+1])<<std::left<<0;
+                    }
+                }
+                os<<'\n';
+            }
+        }
+    }
+void PClustering::save(const std::string& filename) {
+        std::ofstream of;
+        of.open(filename.c_str()); 
+        print(of);
+
+        of<<"\nCluster Membership\n"; 
+        of<<"Record ID, Cluster Index, Cluster Index Given\n";
+        for(Size i=0; i<_CM.size();++i) {
+            of<<i+1<<", "<<_CM[i];
+            if(_numclustGiven == Null<Size>()){
+                of<<", NA\n";
+                continue;
+            }
+            of<<", "<<_CMGiven[i]<<'\n';
+        }
+        of.close();
+    }
+
+void PClustering::crosstab() {
+        Size c1, c2;
+        for(Size i=0; i<_CM.size();++i) {
+            c1 = _CM[i];
+            c2 = _CMGiven[i];
+            if (_crosstab.contain_key(c1,c2)) { 
+                _crosstab(c1,c2) += 1;
+            } else {
+                _crosstab.add_item(c1,c2,1);
+            }
+        } 
+    }
+
 void PClustering::calculate() {
         if(_bCalculated) {
             return;

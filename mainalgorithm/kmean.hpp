@@ -137,7 +137,6 @@ void Kmean::fetchResults() const
     }
     _results.CM = _CM;
     _results.insert("pc",boost::any(pc));
-
     _error = 0.0;
     //计算总的errors
     for(Size i=0;i<_ds->size();++i)

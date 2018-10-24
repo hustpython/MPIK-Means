@@ -644,3 +644,42 @@ RecordID  Attr(1)   Attr(2)   Attr(3)   Label
 1         -2.1      1         1.5       1
 2         1.5       0         -0.1      0
 ```
+### 3.3 构建簇
+构建簇的目的就是为了将dataset中的record进行重新组合,所以我们定义一个基类Cluster直接接触Record,
+有一个数据成员id.
+```c++
+class Cluster:public Container<boost::shared_ptr<Record> >
+{
+   public:
+        virtual ~Cluster() {}
+
+        void set_id(Size id);
+        Size get_id() const;
+    protected:
+        Size _id;
+};
+inline void Cluster::set_id(Size id) {
+        _id = id;
+}
+inline Size Cluster::get_id() const {
+    return _id;
+}
+```
+定义一个中心簇,来表示一个簇的中心.
+
+```c++
+class CenterCluster : public Cluster
+{
+    public:
+      CenterCluster(){}
+      CenterCluster(const boost::shared_ptr<Record>& center);//构造函数传入一个record
+      const boost::shared_ptr<Record>& center() const;//返回中心点的record,不可更改
+    protected: 
+      boost::shared_ptr<Record>_center; //成员变量,中心点的record
+};
+CenterCluster::CenterCluster(const boost::shared_ptr<Record>& center):_center(center){}
+const boost::shared_ptr<Record>& CenterCluster::center() 
+        const {
+        return _center;
+    }
+```
