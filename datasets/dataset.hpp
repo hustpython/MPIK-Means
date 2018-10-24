@@ -12,7 +12,7 @@ class Dataset:public Container<boost::shared_ptr<Record> >
       const boost::shared_ptr<Schema> &schema() const;//返回_schrma
       const AttrValue& operator()(Size i, Size j) const;//返回第i条第j个属性的值
       std::vector<Size> get_CM() const; 
-      Dataset& operator=(const Dataset&);
+      //Dataset& operator=(const Dataset&);
       bool is_numeric() const;
       bool is_categorical() const;
     protected:

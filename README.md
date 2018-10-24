@@ -104,7 +104,26 @@ sh bootstrap.sh
 安装:
 ./bjam --with-programoptions --with-mpi install
 ```
-自此支持mpi的boost安装完毕！
+检验boost是否安装成功,可以检测一下:
+运行源码,test/mpitest.cpp
+```
+mpic++ -o mpitest mpitest.cpp -L/usr/local/lib -lboost_mpi -lboost_serialization 
+
+mpirun -n 3 ./mpitest(3个进程)
+```
+若结果如下,有三个Process则证明安装成功!
+```
+Process 1: a msg from master
+
+Process 2: a msg from master
+
+Process 2:
+Process 1:
+Process 0: zero one two
+Process 0: zero one two
+Process 1: zero one two
+Process 2: zero one two
+```
 ### 2.2 boost的小技巧
 #### Smart Pointers
 >在Boost中，智能指针是存储指向动态分配对象的指针的对象。智能指针非常有用，因为它们确保正确销毁动态分配的对象，即使在异常情况下也是如此。事实上，智能指针被视为拥有指向的对象，因此负责在不再需要时删除对象。Boost智能指针库提供了六个智能指针类模板。表给出了这些类模板的描述。本实验中将大量使用智能指针。
@@ -135,12 +154,11 @@ sh bootstrap.sh
 
 同样Boost any也有一些优势:
 
-1,any几乎允许任何类型的内容。
+1,any几乎允许任何类型的内容.
 
-2,很少使用模板元编程技术
+2,很少使用模板元编程技术.
 
-3,,,,,,
-
+3,any 对交换操作提供安全的不抛出异常保证.
 #### Tokenizer
 >Tokenizer提供了一种灵活而简单的方法通过分割符（如:" , ")将一个完整的string分隔开。
 
@@ -400,7 +418,34 @@ Record和Schema是继承Container类的两个重要的类,他们之间的关系�
 
 </div>
 
-Record继承带参数AttrValue的模板类Container,有四个私有数据成员_label,_data,id和_schema._data继承自父类.每一个Record类都有一个指向Schema类的共享指针,可以将类型为AttrValue的数据储存在_data中,同样每一个record都有一个label和id.
+
+#### 3.1.5 Schema类
+Schema有两个保护数据成员_labelInfo,_idInfo.和一个继承父类的成员_data,_data是一个元素为AttrInfo的vector,表示每一个数据的属性(离散/连续)._labelInfo是一个指向DattrInfo的共享指针,其包含了输入数据的分类情况.
+Schema的目的是为一个Record对象设置label和id.set_id和set_label函数是为了实现此功能,但是他们又依赖与Record所以我们在Record类中具体定义.
+
+```c++
+class Record;
+class Schema:public Container<boost::shared_ptr<AttrInfo> >
+{
+    public:
+      //virtual ~Schema(){}
+      const boost::shared_ptr<DAttrInfo>& labelInfo() const;//标签信息，整形
+      const boost::shared_ptr<DAttrInfo>& idInfo() const;//id信息，整形
+      boost::shared_ptr<DAttrInfo>& idInfo();//可以修改成员变量,_labelInfo
+      boost::shared_ptr<DAttrInfo>& labelInfo();//可以修改成员变量,_idInfo
+      void set_label(const boost::shared_ptr<Record>& r,const std::string& val);
+      //设置记录的label
+      void set_id(boost::shared_ptr<Record>& r,const std::string& val);
+      //设置记录的id
+    protected:
+      boost::shared_ptr<DAttrInfo> _labelInfo;
+      boost::shared_ptr<DAttrInfo> _idInfo;
+};
+```
+#### 3.1.6 Record类
+
+Record继承带参数AttrValue的模板类Container,有四个私有数据成员_label,_data,id和_schema._data继承自父类.每一个Record类都有一个指向Schema类的共享指针,可以将类型为AttrValue的数据储存在_data中,同样每一个record都有一个label和id.Record的构造函数需要传入一个指向Schema的共享指针,并将_data的长度设置为与_schema一样,将_data里的值设置为默认值.可以我们就可以通过Schema来操控Record,因为Schema的_data类型为AttrInfo有很多函数如add,set_c_val,add_value等函数可以对离散/类型数据进行操作.所以Record和Schema的关系为通过Schema定义了每一条数据的规范(label,id,每一条属性的类型),然后按照这个规范将数据填充到record中,因为record直接接触的类型是AttrValue.
+
 ```c++
 //source:clusters/record.hpp
 class Record:public Container<AttrValue>
@@ -421,28 +466,36 @@ class Record:public Container<AttrValue>
 };
 
 ```
-Schema类
+#### 3.1.7 dataset
+上面已经实现了一条数据的储存就是一个Record,我们最终需要n条数据.这里新定义一个类Dataset.很明显按照上面的思路,Record依赖Schema,则Dataset依赖Record.
+所以Dataset类继承类型为Record的Container.因为最后我们使用的的Dataset类,我们一些我们需要用到的属性可以在这里直接给出,虽然在Record中也可以给出.
+num_attr(),返回属性的个数,is_numeric()判断该列属性值是否是连续行(对于Kmeans算法这里需要连续型数据),为了更加方便第获取每一个数据,使用操作符重载.
 ```c++
-class Record;
-class Schema:public Container<boost::shared_ptr<AttrInfo> >
+inline const AttrValue& Dataset::operator()(Size i, Size j) const {
+        return (*_data[i])[j];
+}
+```
+
+```c++
+class Dataset:public Container<boost::shared_ptr<Record> >
 {
     public:
-      virtual ~Schema(){}
-      const boost::shared_ptr<DAttrInfo>& labelInfo() const;//标签信息，整形
-      const boost::shared_ptr<DAttrInfo>& idInfo() const;//id信息，整形
-      boost::shared_ptr<DAttrInfo>& idInfo();//可以修改成员变量,_labelInfo
-      boost::shared_ptr<DAttrInfo>& labelInfo();//可以修改成员变量,_idInfo
-      void set_label(const boost::shared_ptr<Record>& r,const std::string& val);
-      //设置记录的label
-      void set_id(boost::shared_ptr<Record>& r,const std::string& val);
-      //设置记录的id
+      Dataset(const boost::shared_ptr<Schema>&);//构造函数，传入含有属性值的schema
+      Size num_attr() const;//返回属性个数
+      const boost::shared_ptr<Schema> &schema() const;//返回_schrma
+      const AttrValue& operator()(Size i, Size j) const;//返回第i条第j个属性的值
+      std::vector<Size> get_CM() const; 
+      bool is_numeric() const;
+      bool is_categorical() const;
     protected:
-      boost::shared_ptr<DAttrInfo> _labelInfo;
-      boost::shared_ptr<DAttrInfo> _idInfo;
+      boost::shared_ptr<Schema> _schema;
 };
 ```
+
+
 ### 3.2 创建一个数据库实例
 >前面关于如何构建dataset相关类已经花了很多时间,下面就让我们实际操作如何创建一个具体的dataset.
+
 假设我们有这样的一组数据:
 
 |ID|Attr1|Attr2|Attr3|Label|
