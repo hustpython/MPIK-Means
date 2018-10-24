@@ -323,6 +323,7 @@ CAttrInfo::CAttrInfo(const std::string& name)
 ```
 DAttrInfo类有一个私有变量_values,它是一个string类型的vector,用来存储一些离散的字符串.在DAttrInfo对象中所有的离散值都将由字符串转化为唯一的无符号整形.
 ```c++
+//source:datasets/dcattrinfo.hpp
 class DAttrInfo: public  AttrInfo //继承AttrInfo
 {
     public: 
@@ -366,6 +367,7 @@ add_value 是一个将字符串转化为无符号整形数据的重要函数,返
 通过上面表格中我们可以看到一组字符类型的数据被存储为该字符串所在的inex,如果该字符串第一次出现则为上一个字符串的index+1.这样相同的字符串都被转化为唯一的无符号整形._value这个辅助变量可以帮助实现这一功能.
 
 ```c++
+//source:datasets/dcattrinfo.hpp
 Size DAttrInfo::add_value(const std::string& s,
         bool bAllowDuplicate) {
         Size ind = Null<Size>();
@@ -395,6 +397,7 @@ Size DAttrInfo::add_value(const std::string& s,
 
 这里需要看一下distance这个函数的定义,它返回的是一个双精度类型数值.如果传入的两个数据类型为Unknow则返回为0.0,其中一个为Unknow则为1,对于两个双精度类型的数据返回其差值.
 ```c++
+//source:datasets/dcattrinfo.hpp
 Real CAttrInfo::distance(const AttrValue& av1,const AttrValue& av2) const {
         if(is_unknown(av1) && is_unknown(av2)){
 	    return 0.0;
@@ -409,6 +412,7 @@ Real CAttrInfo::distance(const AttrValue& av1,const AttrValue& av2) const {
 对于离散型数据,两个离散数据之间的距离定义也会不同,这里主要是考虑到离散型数据都转化为相差为1的整形,所以只要两个DAttrInfo的值不同则距离就为1.0,所以在含有离散型和连续型数据的混合数据中连续型数据要进行归一化处理以满足量纲统一.
 
 ```c++
+//source:datasets/dcattrinfo.hpp
 Real DAttrInfo::distance(const AttrValue& av1, 
                              const AttrValue& av2) const { 
         if(is_unknown(av1) && is_unknown(av2)) { 
@@ -429,6 +433,7 @@ Real DAttrInfo::distance(const AttrValue& av1,
 
 Container类是一个基类模板,有一个vector的数据成员_data.add函数可以将T类型的数据添加进入_data,同样erase可以删除数据.[]是一个操作符重载,返回索引i对应的数据.
 ```c++
+//source:clusters/record.hpp
 template <typename T>
 class Container//基类模板
 {
@@ -460,6 +465,7 @@ Schema有两个保护数据成员_labelInfo,_idInfo.和一个继承父类的成�
 Schema的目的是为一个Record对象设置label和id.set_id和set_label函数是为了实现此功能,但是他们又依赖与Record所以我们在Record类中具体定义.
 
 ```c++
+//source:clusters/record.hpp
 class Record;
 class Schema:public Container<boost::shared_ptr<AttrInfo> >
 {
@@ -505,12 +511,14 @@ class Record:public Container<AttrValue>
 上面已经实现了一条数据的储存就是一个Record,我们最终需要n条数据.这里新定义一个类Dataset.很明显按照上面的思路,Record依赖Schema,则Dataset依赖Record.
 所以Dataset类继承类型为Record的Container.因为最后我们使用的的Dataset类,我们一些我们需要用到的属性可以在这里直接给出.num_attr(),返回属性的个数,is_numeric()判断该列属性值是否是连续行(对于Kmeans算法这里需要连续型数据),为了更加方便第获取每一个数据,使用操作符重载.
 ```c++
+//source:datasets/dataset.hpp
 inline const AttrValue& Dataset::operator()(Size i, Size j) const {
         return (*_data[i])[j];
 }
 ```
 
 ```c++
+//source:datasets/dataset.hpp
 class Dataset:public Container<boost::shared_ptr<Record> >
 {
     public:
@@ -543,6 +551,7 @@ class Dataset:public Container<boost::shared_ptr<Record> >
 那么我们如何将以上数据用我们的dataset类来表示呢?
 
 ```c++
+//test/datasettest.cpp
 #include"../clusters/record.hpp"
 #include "../datasets/dataset.hpp"
 #include<iostream>
