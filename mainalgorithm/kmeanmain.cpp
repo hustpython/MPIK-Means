@@ -9,7 +9,7 @@ using namespace boost::program_options;
 //编译:
 //mpic++ -o kmeantest kmeanmain.cpp -L/usr/local/lib -lboost_program_options -lboost_serialization
 //运行:
-//./kmeantest --datafile=../testdata/600points.csv
+//./kmeantest --datafile=../testdata/15000points.csv --k=10 --numrun=50
 int main( int argc,char * argv[])
 {
     try

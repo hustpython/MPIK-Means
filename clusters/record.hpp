@@ -191,25 +191,24 @@ class PClustering:public Container<boost::shared_ptr<Cluster> >
     public:
       PClustering();//构造函数
       friend std::ostream& operator<<(std::ostream& os,
-                PClustering& pc);
-      void removeEmptyClusters();
+                PClustering& pc);//输出聚类结构相关信息
+      void removeEmptyClusters();//移除空的record
       void createClusterID();
-      void save(const std::string& filename);
+      void save(const std::string& filename);//保存聚类结果相关信息至文件
 
     private: 
-        void print(std::ostream &os);
+        void print(std::ostream &os);//打印聚类结果相关信息
         void calculate();
-        void crosstab();
+        void crosstab();//将一些聚类结果储存为交叉表
 
         bool _bCalculated;
-        Size _numclust;
-        Size _numclustGiven;
+        Size _numclust;//聚类数
+        Size _numclustGiven;//文件提供的label数
         std::vector<Size> _clustsize;
         std::vector<std::string> _clustLabel;
         std::vector<Size> _CM;
         std::vector<Size> _CMGiven;
         iiiMapB _crosstab;
-
 };
 PClustering::PClustering(): _bCalculated(false),
         _numclustGiven(Null<Size>()) {
@@ -342,6 +341,7 @@ void PClustering::calculate() {
                 _CMGiven[r->get_id()] = r->get_label();
             }
         }
+        crosstab();
         _bCalculated = true;
     }
 #endif

@@ -149,7 +149,6 @@ void Kmean::fetchResults() const
 void Kmean::iteration() const 
 {
     bool bChanged = true;
-
     updateCenter();
     _numiter = 1;
     while(bChanged)
@@ -194,7 +193,7 @@ void Kmean::updateCenter() const
     boost::shared_ptr<Schema> schema = _ds->schema();
     for(Size k =0;k<_clusters.size();++k)
     {
-        for(Size j=0;j<_clusters[k]->size();++j)
+        for(Size j=0;j<schema->size();++j)
         {
             dTemp = 0.0;
             for(Size i=0;i<_clusters[k]->size();++i)
@@ -205,7 +204,6 @@ void Kmean::updateCenter() const
             (*schema)[j]->set_c_val((*_clusters[k]->center())[j],dTemp/_clusters[k]->size());
         }
     }
-
 }
 //随机初始化簇
 void Kmean::initialization() const 

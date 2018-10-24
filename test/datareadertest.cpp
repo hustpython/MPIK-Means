@@ -3,9 +3,10 @@
 #include<sstream>
 #include<iomanip>
 using namespace std;
+//mpic++ -o reader datareadertest.cpp -L/usr/local/lib -lboost_program_options -lboost_serialization
 int main()
 {
-    DatasetReader *p = new DatasetReader("4points.data");
+    DatasetReader *p = new DatasetReader("../testdata/600points.csv");
     boost::shared_ptr<Dataset> ds;
     p->fill(ds);
 

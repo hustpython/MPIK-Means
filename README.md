@@ -665,7 +665,7 @@ inline Size Cluster::get_id() const {
     return _id;
 }
 ```
-定义一个中心簇,来表示一个簇的中心.
+定义一个中心簇,来表示一个簇的中心.中心簇只有一个数据成员_center即表示中心簇的指向Record的共享指针.
 
 ```c++
 class CenterCluster : public Cluster
@@ -682,4 +682,9 @@ const boost::shared_ptr<Record>& CenterCluster::center()
         const {
         return _center;
     }
+```
+为了实现更多丰富的功能,我们需要再定义一个类PClustering.
+
+```c++
+
 ```

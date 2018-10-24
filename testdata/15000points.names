@@ -1,0 +1,6 @@
+This is the schema file for dataset 15000points.csv
+///: schema
+1, RecordID
+2, Continuous
+3, Continuous
+4, Class
