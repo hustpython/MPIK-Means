@@ -188,6 +188,48 @@ Process 2: zero one two
 接下来将具体实践各个类,会给出每一个类的声明并解释其成员函数和数据成员以及相关联类之间的继承关系和逻辑关系.涉及到重要的成员函数的实现会给出其定义代码,一些普通的成员函数的源码可以到下载的源文件中查看,里面也会有详细的注解.
 ### 3.1 数据集的构建
 数据对于一个聚类算法来说非常重要,在这里我们将一个数据集描述为一个记录(record),一个记录由一些属性(Attribute)表征.因此自然而然将依次建立attributes,records,最后是数据集datasets.
+
+在此之前我们需要了解一下我们在聚类中实际接触到的数据类型.
+这里有一个示例,[心脏数据集](http://archive.ics.uci.edu/ml/machine-learning-databases/statlog/heart/).
+
+```
+//heart.data
+70.0,1.0,4.0,130.0,322.0,0.0,2.0,109.0,0.0,2.4,2.0,3.0,3.0,2
+67.0,0.0,3.0,115.0,564.0,0.0,2.0,160.0,0.0,1.6,2.0,0.0,7.0,1
+57.0,1.0,2.0,124.0,261.0,0.0,0.0,141.0,0.0,0.3,1.0,0.0,7.0,2
+64.0,1.0,4.0,128.0,263.0,0.0,0.0,105.0,1.0,0.2,2.0,1.0,7.0,1
+74.0,0.0,2.0,120.0,269.0,0.0,2.0,121.0,1.0,0.2,1.0,1.0,3.0,1
+65.0,1.0,4.0,120.0,177.0,0.0,0.0,140.0,0.0,0.4,1.0,0.0,7.0,1
+......
+```
+包含13个属性,age,sex,chest pain type(4 values),resting blood pressure......
+为了更好第表述不同数据相同属性的差异,我们需要对这些数据进行离散/连续处理,即对于有些数据我们认为它是连续的如:age,有些是离散的如:年龄.这样我们建立一个描述数据类型的文件:
+```
+//heart.names
+schema file for heart.dat
+///: schema
+1, Continuous
+2, Discrete
+3, Discrete
+4, Continuous
+5, Continuous
+6, Discrete
+7, Discrete
+8, Continuous
+9, Discrete
+10, Continuous
+11, Discrete
+12, Continuous
+13, Discrete
+14, Class
+```
+
+
+#### 3.1.1 AttrValue类
+
+AttrValue类有一个私有变量,有两个友元函数,一个公有成员函数.
+_value是一个variant类型变量,它可以存储一个双精度或无符号整形的数据,分类数据用无符号整形数据表示.
+AttrValue类自身无法存储或获取数据.它的两个友元函数可以获取和修改数据_value.
 <div align=center>
 
 <img src="doc/attrvalue.png" width="45%" height="40%" />
@@ -195,13 +237,6 @@ Process 2: zero one two
 图3 数据类UML关系图
 
 </div>
-
-#### 3.1.1 AttrValue类
-
-AttrValue类有一个私有变量,有两个友元函数,一个公有成员函数.
-_value是一个variant类型变量,它可以存储一个双精度或无符号整形的数据,分类数据用无符号整形数据表示.
-AttrValue类自身无法存储或获取数据.它的两个友元函数可以获取和修改数据_value.
-
 ```c++
 //source:datasets.attrinfo.hpp
 class AttrValue 
