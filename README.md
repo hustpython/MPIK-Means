@@ -237,6 +237,7 @@ AttrValue类自身无法存储或获取数据.它的两个友元函数可以获�
 图3 数据类UML关系图
 
 </div>
+
 ```c++
 //source:datasets.attrinfo.hpp
 class AttrValue 
