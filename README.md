@@ -464,7 +464,6 @@ class Record;
 class Schema:public Container<boost::shared_ptr<AttrInfo> >
 {
     public:
-      //virtual ~Schema(){}
       const boost::shared_ptr<DAttrInfo>& labelInfo() const;//标签信息，整形
       const boost::shared_ptr<DAttrInfo>& idInfo() const;//id信息，整形
       boost::shared_ptr<DAttrInfo>& idInfo();//可以修改成员变量,_labelInfo
@@ -480,7 +479,7 @@ class Schema:public Container<boost::shared_ptr<AttrInfo> >
 ```
 #### 3.1.6 Record类
 
-Record继承带参数AttrValue的模板类Container,有四个私有数据成员_label,_data,id和_schema._data继承自父类.每一个Record类都有一个指向Schema类的共享指针,可以将类型为AttrValue的数据储存在_data中,同样每一个record都有一个label和id.Record的构造函数需要传入一个指向Schema的共享指针,并将_data的长度设置为与_schema一样,将_data里的值设置为默认值.可以我们就可以通过Schema来操控Record,因为Schema的_data类型为AttrInfo有很多函数如add,set_c_val,add_value等函数可以对离散/类型数据进行操作.所以Record和Schema的关系为通过Schema定义了每一条数据的规范(label,id,每一条属性的类型),然后按照这个规范将数据填充到record中,因为record直接接触的类型是AttrValue.
+Record继承带参数AttrValue的模板类Container,有四个私有数据成员_label,_data,id和_schema._data继承自父类.每一个Record类都有一个指向Schema类的共享指针,可以将类型为AttrValue的数据储存在_data中,同样每一个record都有一个label和id.Record的构造函数需要传入一个指向Schema的共享指针,并将_data的长度设置为与_schema一样,将_data里的值设置为默认值.我们就可以通过Schema来操控Record,因为Schema的_data类型为AttrInfo有很多函数如add,set_c_val,add_value等函数可以对离散/类型数据进行操作.所以Record和Schema的关系为通过Schema定义了每一条数据的规范(label,id,每一条属性的类型),然后按照这个规范将数据填充到record中,因为record直接接触的类型是AttrValue.
 
 ```c++
 //source:clusters/record.hpp
@@ -504,8 +503,7 @@ class Record:public Container<AttrValue>
 ```
 #### 3.1.7 dataset
 上面已经实现了一条数据的储存就是一个Record,我们最终需要n条数据.这里新定义一个类Dataset.很明显按照上面的思路,Record依赖Schema,则Dataset依赖Record.
-所以Dataset类继承类型为Record的Container.因为最后我们使用的的Dataset类,我们一些我们需要用到的属性可以在这里直接给出,虽然在Record中也可以给出.
-num_attr(),返回属性的个数,is_numeric()判断该列属性值是否是连续行(对于Kmeans算法这里需要连续型数据),为了更加方便第获取每一个数据,使用操作符重载.
+所以Dataset类继承类型为Record的Container.因为最后我们使用的的Dataset类,我们一些我们需要用到的属性可以在这里直接给出.num_attr(),返回属性的个数,is_numeric()判断该列属性值是否是连续行(对于Kmeans算法这里需要连续型数据),为了更加方便第获取每一个数据,使用操作符重载.
 ```c++
 inline const AttrValue& Dataset::operator()(Size i, Size j) const {
         return (*_data[i])[j];
@@ -529,7 +527,7 @@ class Dataset:public Container<boost::shared_ptr<Record> >
 ```
 
 
-### 3.2 创建一个数据库实例
+### 3.2 创建一个数据实例
 >前面关于如何构建dataset相关类已经花了很多时间,下面就让我们实际操作如何创建一个具体的dataset.
 
 假设我们有这样的一组数据:
@@ -629,7 +627,7 @@ int main()
     return 0;  
 }
 ```
-输出结果与我们料想的一样:
+输出结果与我们预想的一样:
 ```
 Data:
 RecordID  Attr(1)   Attr(2)   Attr(3)   Label
