@@ -30,21 +30,17 @@ int main(int ac, char* av[]){
              "maximum number of iterations")
             ("numrun", value<Size>()->default_value(1), 
              "number of runs");
-
         variables_map vm;        
         store(parse_command_line(ac, av, desc), vm);
         notify(vm);    
-
         if (vm.count("help") || ac==1) {
             cout << desc << "\n";
             return 1;
         }
-
         Size numclust = vm["k"].as<Size>(); 
         Size maxiter = vm["maxiter"].as<Size>(); 
         Size numrun = vm["numrun"].as<Size>(); 
         Size seed = vm["seed"].as<Size>();
-
         string datafile;
         if (vm.count("datafile")) {
             datafile = vm["datafile"].as<string>();
@@ -52,24 +48,18 @@ int main(int ac, char* av[]){
             cout << "Please provide a data file\n";
             return 1;
         }
-
         boost::shared_ptr<Dataset> ds; 
-
         if (world.rank() ==0) {
             DatasetReader reader(datafile);
             reader.fill(ds);
-            //std::cout<<*ds<<std::endl;
         }
-
         boost::timer t;
         t.restart();
-        
         Results Res;
         Real avgiter = 0.0;
         Real avgerror = 0.0;
         Real dMin = MAX_REAL;
         Real error;
-
         for(Size i=1; i<=numrun; ++i) {
             MPIKmean ca;
             Arguments &Arg = ca.getArguments();
@@ -82,9 +72,7 @@ int main(int ac, char* av[]){
             } else {
                 Arg.additional["seed"] = i;
             }
-
             ca.clusterize();
-            
             if(world.rank() == 0) { 
                 const Results &tmp = ca.getResults();
                 avgiter += 
@@ -97,27 +85,22 @@ int main(int ac, char* av[]){
                 }
             }
         }
-
         double seconds = t.elapsed();
         if(world.rank() == 0) {
             avgiter /= numrun;
             avgerror /= numrun;
-
             std::cout<<"completed in "<<seconds
                 <<" seconds"<<std::endl;
             std::cout<<"number of processes: "
                 <<world.size()<<std::endl;
-
             PClustering pc = 
                 boost::any_cast<PClustering>(Res.get("pc"));
-
             std::cout<<pc<<std::endl;
             std::cout<<"Number of runs: "<<numrun<<std::endl;
             std::cout<<"Average number of iterations: "
                 <<avgiter<<std::endl;
             std::cout<<"Average error: "<<avgerror<<std::endl;
             std::cout<<"Best error: "<<dMin<<std::endl;
-
             std::string prefix;
             size_t ind = datafile.find_last_of('.');
             if(ind != std::string::npos ) {
@@ -129,7 +112,6 @@ int main(int ac, char* av[]){
             ss<<prefix<<"-kmean-k"<<numclust<<"-s"<<seed<<".txt";
             pc.save(ss.str());
         }
-
         return 0;
     } catch (std::exception& e) {
         std::cout<<e.what()<<std::endl;
