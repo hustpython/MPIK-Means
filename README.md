@@ -203,7 +203,7 @@ Process 2: zero one two
 ......
 ```
 包含13个属性,age,sex,chest pain type(4 values),resting blood pressure......
-为了更好第表述不同数据相同属性的差异,我们需要对这些数据进行离散/连续处理,即对于有些数据我们认为它是连续的如:age,有些是离散的如:年龄.这样我们建立一个描述数据类型的文件:
+为了更好地表述不同数据相同属性的差异,我们需要对这些数据进行离散/连续处理,即对于有些数据我们认为它是连续的如:age,有些是离散的如:年龄.这样我们建立一个描述数据类型的文件:
 ```
 //heart.names
 schema file for heart.dat
