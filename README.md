@@ -21,7 +21,17 @@ Linux 命令行终端，打开后会进入 Bash 环境，可以用来执行 Linu
 ### 1.5 代码获取
 
 ### 1.6 效果图
-
+完成时间显示:
+- 单进程
+```
+completed in 31.9997 seconds
+number of processes: 1
+```
+- 8进程
+```
+completed in 7.35373 seconds
+number of processes: 8
+```
 输出结果文件
 
 <div align=center>
@@ -173,16 +183,6 @@ Process 2: zero one two
 
  [A] [flexible,] [easy] [tokenizer]
 
-### 2.3 K-Means算法思路
-
-<div align=center>
-
-<img src="doc/lct1.png" width="30%" height="30%" />
-
-图2 Ｋ-Means算法流程图
-
-</div>
-
 
 ## 三，实验步骤
 接下来将具体实践各个类,会给出每一个类的声明并解释其成员函数和数据成员以及相关联类之间的继承关系和逻辑关系.涉及到重要的成员函数的实现会给出其定义代码,一些普通的成员函数的源码可以到下载的源文件中查看,里面也会有详细的注解.
@@ -234,7 +234,7 @@ AttrValue类自身无法存储或获取数据.它的两个友元函数可以获�
 
 <img src="doc/attrvalue.png" width="45%" height="40%" />
 
-图3 数据类UML关系图
+图2 数据类UML关系图
 
 </div>
 
@@ -455,7 +455,7 @@ Record和Schema是继承Container类的两个重要的类,他们之间的关系�
 
 <img src="doc/record.png" width="30%" height="30%" />
 
-图4 Container关系图
+图3 Container关系图
 
 </div>
 
@@ -690,7 +690,7 @@ const boost::shared_ptr<Record>& CenterCluster::center()
 
 <img src="doc/pcluster.png" width="50%" height="30%" />
 
-图5 PClustering 关系图
+图4 PClustering 关系图
 
 </div>
 
@@ -754,3 +754,14 @@ void PClustering::crosstab() {
         } 
     }
 ```
+
+### 3.4 K-Means算法
+#### 3.4.1 算法思路
+
+<div align=center>
+
+<img src="doc/lct1.png" width="30%" height="30%" />
+
+图5 Ｋ-Means算法流程图
+
+</div>
