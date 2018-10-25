@@ -160,7 +160,6 @@ class Cluster:public Container<boost::shared_ptr<Record> >
 inline void Cluster::set_id(Size id) {
         _id = id;
 }
-
 inline Size Cluster::get_id() const {
     return _id;
 }
@@ -191,24 +190,24 @@ class PClustering:public Container<boost::shared_ptr<Cluster> >
     public:
       PClustering();//构造函数
       friend std::ostream& operator<<(std::ostream& os,
-                PClustering& pc);//输出聚类结构相关信息
+                PClustering& pc);//操作符重载,输出聚类结构相关信息
       void removeEmptyClusters();//移除空的record
-      void createClusterID();
+      void createClusterID();//创建聚类id
       void save(const std::string& filename);//保存聚类结果相关信息至文件
 
     private: 
         void print(std::ostream &os);//打印聚类结果相关信息
-        void calculate();
+        void calculate();//更新_CM和_CMGiven
         void crosstab();//将一些聚类结果储存为交叉表
 
-        bool _bCalculated;
+        bool _bCalculated;//如果数据文件没有标签信息,则不需要计算_numclustGiven
         Size _numclust;//聚类数
         Size _numclustGiven;//文件提供的label数
-        std::vector<Size> _clustsize;
-        std::vector<std::string> _clustLabel;
-        std::vector<Size> _CM;
-        std::vector<Size> _CMGiven;
-        iiiMapB _crosstab;
+        std::vector<Size> _clustsize;//记录每一簇的数据量
+        std::vector<std::string> _clustLabel;//记录原文件中的每个分类的数量
+        std::vector<Size> _CM;//每一条记录数据的所属index
+        std::vector<Size> _CMGiven;//原文件每一条记录所属标签
+        iiiMapB _crosstab;//交叉表储存数据
 };
 PClustering::PClustering(): _bCalculated(false),
         _numclustGiven(Null<Size>()) {

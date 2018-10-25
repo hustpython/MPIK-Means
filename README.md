@@ -668,6 +668,7 @@ inline Size Cluster::get_id() const {
 定义一个中心簇,来表示一个簇的中心.中心簇只有一个数据成员_center即表示中心簇的指向Record的共享指针.
 
 ```c++
+//clusters/record.hpp
 class CenterCluster : public Cluster
 {
     public:
@@ -685,6 +686,74 @@ const boost::shared_ptr<Record>& CenterCluster::center()
 ```
 为了实现更多丰富的功能,我们需要再定义一个类PClustering.
 
-```c++
+<div align=center>
 
+<img src="doc/pcluster.png" width="50%" height="30%" />
+
+图5 PClustering 关系图
+
+</div>
+
+PClustering继承Container,通过add函数添加了中心簇Center.Center也拥有add函数,它添加属于和他同一簇的record,每一个record都有自己的id信息.这样我们就能通过PClustering储存了聚类信息.
+.里面的重要的数据成员为_CM,是原来储存每一条record的所属聚类.如:[1,1,1,2,2,2],同一簇拥有相同的数值.同时因为它继承Container所以它可以通过add函数,增加每一个ClusterCenter.
+
+
+
+```c++
+//clusters/record.hpp
+class PClustering:public Container<boost::shared_ptr<Cluster> >  
+{
+    public:
+      PClustering();//构造函数
+      friend std::ostream& operator<<(std::ostream& os,
+                PClustering& pc);//操作符重载,输出聚类结构相关信息
+      void removeEmptyClusters();//移除空的record
+      void createClusterID();//创建聚类id
+      void save(const std::string& filename);//保存聚类结果相关信息至文件
+    private: 
+        void print(std::ostream &os);//打印聚类结果相关信息
+        void calculate();//更新_CM和_CMGiven
+        void crosstab();//将一些聚类结果储存为交叉表
+        bool _bCalculated;/如果数据文件没有标签信息,则不需要计算_numclustGiven
+        Size _numclust;//聚类数
+        Size _numclustGiven;//文件提供的label数
+        std::vector<Size> _clustsize;//记录每一簇的数据量
+        std::vector<std::string> _clustLabel;//记录原文件中的每个分类的数量
+        std::vector<Size> _CM;//每一条记录数据的所属index
+        std::vector<Size> _CMGiven;//原文件每一条记录所属标签
+        iiiMapB _crosstab;//交叉表储存数据
+};
+```
+这里我们介绍一个模板键-值映射类nnmap(utilities/nnmap.hpp),在这里我们用来储存聚类和原标签的数量信息.
+如有6条数据,计算的_CM为[1,1,2,2,2,3],所给标签为[0,0,1,1,2,2].
+我们需要通过下面_crosstab.填充下面的表格
+```
+Cluster ID   1   2   3   
+0            #   #   #
+1            #   #   #  
+2            #   #   #
+```
+_crosstab(1,0)表示聚类为1,标签为0的数量.通过下面的函数,可以为2.同理_crosstab(2,0)=0,_crosstab(3,0) = 0.最终可以打印交叉表:
+```
+Cluster ID   1   2   3   
+0            2   0   0
+1            0   2   0  
+2            0   1   1
+```
+如果以标签信息为准的化,则(2,2)那个信息有误,每一行只能有一个数据占据,且不能与之前有相同的列.
+
+```c++
+//clusters/record.hpp
+void PClustering::crosstab() {
+        Size c1, c2;
+        for(Size i=0; i<_CM.size();++i) {
+            c1 = _CM[i];
+            c2 = _CMGiven[i];
+            if (_crosstab.contain_key(c1,c2)) { 
+                _crosstab(c1,c2) += 1;
+            } else {
+                _crosstab.add_item(c1,c2,1);
+            }
+        } 
+    }
 ```
