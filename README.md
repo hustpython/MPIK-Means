@@ -294,7 +294,7 @@ private:
 #### 3.1.3 CAttrInfo类和DAttrInfo类
 CAttrInfo主要是用来表示连续型数据的一些属性和方法.有两个数据成员:_min和_max.表示最小值和最大值属性,在初始化时都将设置为```Null<Size>``` .这两个属性将在归一化的时候用到.CAttrInfo将会继承AttrInfo的一些函数,并且重新定义.
 
-```c++{class=line-numbers}
+```c++ {class=line-numbers}
 //source:datasets/dcattrinfo.hpp
 class CAttrInfo: public AttrInfo 
 {
@@ -319,7 +319,6 @@ CAttrInfo::CAttrInfo(const std::string& name)
         _min = Null<Real>();
         _max = Null<Real>();
     }
-
 ```
 DAttrInfo类有一个私有变量_values,它是一个string类型的vector,用来存储一些离散的字符串.在DAttrInfo对象中所有的离散值都将由字符串转化为唯一的无符号整形.
 ```c++ {class=line-numbers}
@@ -505,9 +504,8 @@ class Record:public Container<AttrValue>
         AttrValue _label;
         AttrValue _id;
 };
-
 ```
-#### 3.1.7 dataset
+#### 3.1.7 dataset类
 上面已经实现了一条数据的储存就是一个Record,我们最终需要n条数据.这里新定义一个类Dataset.很明显按照上面的思路,Record依赖Schema,则Dataset依赖Record.
 所以Dataset类继承类型为Record的Container.因为最后我们使用的的Dataset类,我们一些我们需要用到的属性可以在这里直接给出.num_attr(),返回属性的个数,is_numeric()判断该列属性值是否是连续行(对于Kmeans算法这里需要连续型数据),为了更加方便第获取每一个数据,使用操作符重载.
 ```c++ {class=line-numbers}
@@ -762,10 +760,10 @@ void PClustering::crosstab() {
 
 <img src="doc/lct1.png" width="30%" height="30%" />
 
+图5 Ｋ-Means算法流程图
 
 </div>
 
-图5 Ｋ-Means算法流程图
 #### 3.4.2 并行化思路
 
 我们使用一种序列 - 均值算法的思路.即计算所有记录n和所有中心之间的距离.p个进程,让每一个参与计算的进程处理 n/p条数据.主要步骤如下:
@@ -786,7 +784,7 @@ void PClustering::crosstab() {
 reduce 是将其他进程汇聚到一个进程.
 
 all_reduce是将一个进程广播到所有进程.
-
+#### 3.4.3 MPIKmean类
 将所有的中心簇的数据编码成一个向量_clusters,这样可以很方便第从一个进程发送至其他进程.同样_data表示所有的数据的值.
 ```c++ {class=line-numbers}
 //source:mainalgorithm/mpikmean.hpp
@@ -822,8 +820,288 @@ class MPIKmean
         boost::mpi::communicator _world;//mpi通信
 };
 ```
-主进程负责初始化中心簇,一旦中心簇被初始化,就会将中心簇(_centers)和每个进程的数据的数目(_numRecords)和属性数(_numAttr)发送给所有进程.
-一旦这些数据被进程接收到,每个进程就会划分自己的数据块数量和剩余量.首先主进程会进行这些操作.
+主进程负责初始化中心簇(4-33行),一旦中心簇被初始化,就会将中心簇(_centers)和每个进程的数据的数目(_numRecords)和属性数(_numAttr)发送给所有进程(34-36行).
+一旦这些数据被进程接收到,每个进程就会划分自己的数据块数量和剩余量(37-38行).首先主进程会将第一个数据块分配给自己(40-49行),剩余的数据通过```send```函数发送给其他进程(51-63行).其他进程通过```recv```进行接收数据(67行).
 ```c++ {class=line-numbers}
+void MPIKmean::initialization() const {
+    Size numRecords; 
+    Size rank = _world.rank();
+    if (rank == 0) {
+        numRecords = _ds->size(); 
+        _numAttr = _ds->num_attr();
+        _centers.resize(_numclust * _numAttr);
+        vector<Integer> index(numRecords,0);
+        for(Size i=0;i<index.size();++i){
+            index[i] = i;
+        }
+        boost::shared_ptr<Schema> schema = _ds->schema();
+        boost::minstd_rand generator(_seed);
+        for(Size i=0;i<_numclust;++i){
+            boost::uniform_int<> uni_dist(0,numRecords-i-1);
+            boost::variate_generator<boost::minstd_rand&, 
+                boost::uniform_int<> > 
+                    uni(generator,uni_dist); 
+            Integer r = uni();
+            boost::shared_ptr<Record> cr = boost::shared_ptr
+                <Record>(new Record(*(*_ds)[r]));
+            boost::shared_ptr<CenterCluster> c = 
+                boost::shared_ptr<CenterCluster>(
+                    new CenterCluster(cr)); 
+            c->set_id(i);
+            _clusters.push_back(c);
+            for(Size j=0; j<_numAttr; ++j) {
+                _centers[i*_numAttr + j] = 
+                    (*schema)[j]->get_c_val((*_ds)(r,j));
+            }
+            index.erase(index.begin()+r);
+        } 
+    } 
+    boost::mpi::broadcast(_world, _centers, 0);
+    boost::mpi::broadcast(_world, numRecords, 0);
+    boost::mpi::broadcast(_world, _numAttr, 0);
+    Size nDiv = numRecords / _world.size();
+    Size nRem = numRecords % _world.size();
+    if(rank == 0) { 
+        boost::shared_ptr<Schema> schema = _ds->schema();
+        _numObj = (nRem >0) ? nDiv+1: nDiv; 
+        _data.resize(_numObj * _numAttr);
+        _CM.resize(_numObj);
+        for(Size i=0; i<_numObj; ++i) {
+            for(Size j=0; j<_numAttr; ++j) {
+                _data[i*_numAttr +j] = 
+                    (*schema)[j]->get_c_val((*_ds)(i, j));
+            }
+        }
+        Size nCount = _numObj; 
+        for(Size p=1; p<_world.size(); ++p) {
+            Size s = (p< nRem) ? nDiv +1 : nDiv;
+            vector<Real> dv(s*_numAttr);
+            for(Size i=0; i<s; ++i) {
+                for(Size j=0; j<_numAttr; ++j) { 
+                    dv[i*_numAttr+j] = 
+                        (*schema)[j]->get_c_val(
+                                (*_ds)(i+nCount,j));
+                }
+            }
+            nCount += s;
+            _world.send(p, 0, dv);
+        }
+    } else {
+        _numObj = (rank < nRem) ? nDiv+1: nDiv; 
+        _CM.resize(_numObj);
+        _world.recv(0,0,_data);
+    } 
+} 
+```
+进行初始化之后,就开始迭代中心簇.
+首先定义一个单元素的```vector```来控制循环(2行).在```while```循环内,定义三个局部变量```nChangedLocal,newCenters,newSize```.每一个进程将会处理自己的数据块与每一个中心簇的距离(11-30行).变量```newCenters```包含了一个聚类中所有数据的和.```newSize```包含了一个聚类中的数据的数量.一旦所有的数据通过并行处理完毕.```all_reduce```方法将会对所有的进程的数据进行收集,如
+```c++
+
+all_reduce(_world, nChangedLocal, nChanged,vplus<Size>());
+```
+对所有进程中的nChangedLocal进行相加(通过操作符vplus,具体见源文件定义),只有有一个进程的nChangedLocal>0(中心簇未收敛)则nChange都会>0,整个迭代都会继续进行.(31-36行),在对这些数据进行收集之后会更新_center(37-41行).
+收敛之后,所有进程会将聚类的index _CM发送给主进程.主进程会将自己的_CM添加进去就形成了整个数据集的_CM(47-58行).
+
+```c++ {class=line-numbers}
+void MPIKmean::iteration() const {
+        vector<Size> nChanged(1,1);//初始化nChanged,表示中心簇是否有变化.
+        _numiter = 1;//初始迭代次数
+        while(nChanged[0] > 0) { 
+            nChanged[0] = 0;
+            Size s;
+            Real dMin,dDist;
+            vector<Size> nChangedLocal(1,0);
+            vector<Real> newCenters(_numclust*_numAttr,0.0);
+            vector<Size> newSize(_numclust,0);
+            for(Size i=0;i<_numObj;++i) {
+                dMin = MAX_REAL;
+                for(Size k=0;k<_numclust;++k) { 
+                    dDist = dist(i, k);
+                    if (dMin > dDist) {
+                        dMin = dDist;
+                        s = k;
+                    }
+                }
+                for(Size j=0; j<_numAttr; ++j) {
+                    newCenters[s*_numAttr+j] += 
+                    		_data[i*_numAttr+j];
+                }
+                newSize[s] +=1;
+
+                if (_CM[i] != s){
+                    _CM[i] = s;
+                    nChangedLocal[0]++;
+                }
+            }
+            all_reduce(_world, nChangedLocal, nChanged, 
+            		vplus<Size>());
+            all_reduce(_world, newCenters, _centers, 
+            		vplus<Real>()); 
+            vector<Size> totalSize(_numclust,0);
+            all_reduce(_world, newSize, totalSize, vplus<Size>()); 
+            for(Size k=0; k<_numclust; ++k) {
+                for(Size j=0; j<_numAttr; ++j) {
+                    _centers[k*_numAttr+j] /= totalSize[k];
+                }
+            }
+            ++_numiter;
+            if (_numiter > _maxiter){
+                break;
+            }
+        }
+        if(_world.rank() > 0) {
+            _world.send(0,0,_CM);
+        } else {
+            for(Size p=1; p<_world.size(); ++p) {
+                vector<Size> msg;
+                _world.recv(p,0,msg);
+                for(Size j=0; j<msg.size(); ++j) {
+                    _CM.push_back(msg[j]);
+                }
+            }
+        }
+    }
+```
+其他几个函数的定义就不再赘述,相信通过看源文件一定可以看懂.
+
+#### 3.4.5 主函数
+从前面建立数据集,到构建簇类,编写一些辅助类到算法的应用.最后我们需要用一个实际的文件进行聚类.代码如下:
+```c++ {class=line-numbers}
+//source:mainalgorithm/mpikmeanmain.cpp
+#include<boost/timer.hpp>
+#include<boost/mpi.hpp>
+#include<boost/program_options.hpp>
+#include<iostream>
+#include<sstream>
+#include<iomanip>
+#include<functional>
+#include "mpikmean.hpp"
+#include "../utilities/datasetreader.hpp"
+
+using namespace std;
+using namespace boost::program_options;
+namespace mpi=boost::mpi;
+int main(int ac, char* av[]){
+    try{
+        mpi::environment env(ac, av);
+        mpi::communicator world;
+        options_description desc("Allowed options");
+        desc.add_options()
+            ("help", "produce help message")
+            ("datafile", value<string>(), "the data file")
+            ("k", value<Size>()->default_value(3), 
+             "number of clusters")
+            ("seed", value<Size>()->default_value(1), 
+             "seed used to choose random initial centers")
+            ("maxiter", value<Size>()->default_value(100), 
+             "maximum number of iterations")
+            ("numrun", value<Size>()->default_value(1), 
+             "number of runs");
+        variables_map vm;        
+        store(parse_command_line(ac, av, desc), vm);
+        notify(vm);    
+        if (vm.count("help") || ac==1) {
+            cout << desc << "\n";
+            return 1;
+        }
+        Size numclust = vm["k"].as<Size>(); 
+        Size maxiter = vm["maxiter"].as<Size>(); 
+        Size numrun = vm["numrun"].as<Size>(); 
+        Size seed = vm["seed"].as<Size>();
+        string datafile;
+        if (vm.count("datafile")) {
+            datafile = vm["datafile"].as<string>();
+        } else {
+            cout << "Please provide a data file\n";
+            return 1;
+        }
+        boost::shared_ptr<Dataset> ds; 
+        if (world.rank() ==0) {
+            DatasetReader reader(datafile);
+            reader.fill(ds);
+        }
+        boost::timer t;
+        t.restart();
+        Results Res;
+        Real avgiter = 0.0;
+        Real avgerror = 0.0;
+        Real dMin = MAX_REAL;
+        Real error;
+        for(Size i=1; i<=numrun; ++i) {
+            MPIKmean ca;
+            Arguments &Arg = ca.getArguments();
+            Arg.ds = ds;
+            Arg.insert("numclust", numclust);
+            Arg.insert("maxiter", maxiter);
+            Arg.insert("seed", seed);
+            if (numrun == 1) {
+                Arg.additional["seed"] = seed;
+            } else {
+                Arg.additional["seed"] = i;
+            }
+            ca.clusterize();
+            if(world.rank() == 0) { 
+                const Results &tmp = ca.getResults();
+                avgiter += 
+                    boost::any_cast<Size>(tmp.get("numiter"));
+                error = boost::any_cast<Real>(tmp.get("error"));
+                avgerror += error;  
+                if (error < dMin) {
+                    dMin = error;
+                    Res = tmp;
+                }
+            }
+        }
+        double seconds = t.elapsed();
+        if(world.rank() == 0) {
+            avgiter /= numrun;
+            avgerror /= numrun;
+            std::cout<<"completed in "<<seconds
+                <<" seconds"<<std::endl;
+            std::cout<<"number of processes: "
+                <<world.size()<<std::endl;
+            PClustering pc = 
+                boost::any_cast<PClustering>(Res.get("pc"));
+            std::cout<<pc<<std::endl;
+            std::cout<<"Number of runs: "<<numrun<<std::endl;
+            std::cout<<"Average number of iterations: "
+                <<avgiter<<std::endl;
+            std::cout<<"Average error: "<<avgerror<<std::endl;
+            std::cout<<"Best error: "<<dMin<<std::endl;
+            std::string prefix;
+            size_t ind = datafile.find_last_of('.');
+            if(ind != std::string::npos ) {
+                prefix = datafile.substr(0,ind);
+            } else {
+                prefix = datafile;
+            }
+            std::stringstream ss;
+            ss<<prefix<<"-kmean-k"<<numclust<<"-s"<<seed<<".txt";
+            pc.save(ss.str());
+        }
+        return 0;
+    } catch (std::exception& e) {
+        std::cout<<e.what()<<std::endl;
+        return 1;
+    } catch (...){
+        std::cout<<"unknown error"<<std::endl;
+        return 2;
+    }
+}
+```
+
+编译:
+```shell
+mpic++ -o mpikmean mpikmeanmain.cpp -L/usr/local/lib -lboost_program_options -lboost_mpi -lboost_serialization
+```
+运行:
 
 ```
+mpirun -n 8 ./mpikmean --datafile=../testdata/15000points.csv --k=10 --numrun=50
+```
+可以比较使用不同的进程数目的不同运行时间,使用多进程确实可以提高运行速度,但是因为I/O操作会占用一些时间,运行效率并没有出现倍数的提升.对于小数据集,I/O操作的开销与数据计算开销相差无几,多进程没有明显优势.对于大数据集,I/O操作开销会小于数据计算的时间,这时候多进程会带来效率上的提升.
+
+## 四 ，实验总结
+到此，我们的K-Means算法的实验就到此结束了,由于考虑到整个内容的繁杂度,有很多小的细节可能没有拿出来细讲,如果小伙伴对有些地方没有弄懂,希望自己能够继续从源码中寻找答案.虽然我们最后只实现了一个简单的聚类算法,但前面介绍的关于构建聚类数据集却具有一定的通用性,对于其他聚类算法也很适用,如果小伙伴愿意尝试其他聚类算法,也可以按照此思路进行改写.并行处理是一种技巧,如果使用恰当,能够给计算效率带来很大的提升,本例的并行处理思路同样可以推广到其他算法当中.
+
+感谢你能够看到最后,希望你有所收获!
