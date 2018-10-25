@@ -780,10 +780,6 @@ void PClustering::crosstab() {
 
 (f)主进程:收集聚类结果.
 
-
-reduce 是将其他进程汇聚到一个进程.
-
-all_reduce是将一个进程广播到所有进程.
 #### 3.4.3 MPIKmean类
 将所有的中心簇的数据编码成一个向量_clusters,这样可以很方便第从一个进程发送至其他进程.同样_data表示所有的数据的值.
 ```c++ {class=line-numbers}
