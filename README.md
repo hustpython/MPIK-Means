@@ -694,10 +694,7 @@ const boost::shared_ptr<Record>& CenterCluster::center()
 
 </div>
 
-PClustering继承Container,通过add函数添加了中心簇Center.Center也拥有add函数,它添加属于和他同一簇的record,每一个record都有自己的id信息.这样我们就能通过PClustering储存了聚类信息.
-.里面的重要的数据成员为_CM,是原来储存每一条record的所属聚类.如:[1,1,1,2,2,2],同一簇拥有相同的数值.同时因为它继承Container所以它可以通过add函数,增加每一个ClusterCenter.
-
-
+PClustering继承Container,通过add函数添加了中心簇Center.Center也拥有add函数,它添加属于和他同一簇的record,每一个record都有自己的id信息.这样我们就能通过PClustering储存了聚类信息.PClustering的一个数据成员为_CM,是用来储存每一条record的所属聚类.如:[1,1,1,2,2,2],同一簇拥有相同的数值.calculate函数是用来从_data中提取相关聚类信息,然后更新_CM.
 
 ```c++
 //clusters/record.hpp
