@@ -961,7 +961,9 @@ void MPIKmean::iteration() const {
 其他几个函数的定义就不再赘述,相信通过看源文件一定可以看懂.
 
 #### 3.4.5 主函数
-从前面建立数据集,到构建簇类,编写一些辅助类到算法的应用.最后我们需要用一个实际的文件进行聚类.代码如下:
+从前面建立数据集,到构建簇类,编写一些辅助类到算法的实现.最后我们将具体对一个文件数据进行聚类.
+
+代码如下:
 ```c++ {class=line-numbers}
 //source:mainalgorithm/mpikmeanmain.cpp
 #include<boost/timer.hpp>
@@ -1085,15 +1087,17 @@ int main(int ac, char* av[]){
     }
 }
 ```
-
 编译:
 ```shell
 mpic++ -o mpikmean mpikmeanmain.cpp -L/usr/local/lib -lboost_program_options -lboost_mpi -lboost_serialization
 ```
+
+运行时需要传入一些参数:datafile(文件路径),k(聚类数目),seed(随机初始化种子),maxiter(最大迭代次数),numrun(运行次数).除了datafile之外其他参数在主函数中均有默认值.下面我们进行一个15000条数据的3分类,执行50次.
+
 运行:
 
 ```
-mpirun -n 8 ./mpikmean --datafile=../testdata/15000points.csv --k=10 --numrun=50
+mpirun -n 8 ./mpikmean --datafile=../testdata/15000points.csv --k=3 --numrun=50
 ```
 运行结果如第一章所示.
 
