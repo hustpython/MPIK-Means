@@ -112,7 +112,7 @@ sh bootstrap.sh
 第24行添加一句:using mpi ;(注意中间的空格)
 
 安装:
-./bjam --with-program_options --with-mpi install
+sudo ./bjam --with-program_options --with-mpi install
 ```
 mpi支持的进程数和计算机的配置有关,通过```cat /proc/cpuinfo |grep "processor"|wc -l```命令,可以查看得知实验楼支持4个进程.
 
