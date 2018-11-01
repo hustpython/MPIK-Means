@@ -27,10 +27,10 @@ Linux 命令行终端，打开后会进入 Bash 环境，可以用来执行 Linu
 completed in 31.9997 seconds
 number of processes: 1
 ```
-- 8进程
+- 4进程
 ```
-completed in 7.35373 seconds
-number of processes: 8
+completed in 9.87732 seconds
+number of processes: 4
 ```
 输出结果文件
 
@@ -112,15 +112,18 @@ sh bootstrap.sh
 第19行添加一句:using mpi;
 
 安装:
-./bjam --with-programoptions --with-mpi install
+./bjam --with-program_options --with-mpi install
 ```
-检验boost是否安装成功,可以检测一下:
+mpi支持的进程数和计算机的配置有关,通过```cat /proc/cpuinfo |grep "processor"|wc -l```命令,可以查看得知实验楼支持4个进程.
+
+检验boost是否安装成功,可以检测一下,这里我们测试开启3个进程:
 运行源码,test/mpitest.cpp
 ```
 mpic++ -o mpitest mpitest.cpp -L/usr/local/lib -lboost_mpi -lboost_serialization 
 
-mpirun -n 3 ./mpitest(3个进程)
+mpirun -n 3 ./mpitest
 ```
+
 若结果如下,有三个Process则证明安装成功!
 ```
 Process 1: a msg from master
@@ -764,6 +767,8 @@ void PClustering::crosstab() {
 
 </div>
 
+在代码实现中我们还会有一个多次运行循环的结构,这样的目的是通过多次的随机初始化确保能够消除一些极端的情况,最后取这些循环中最好的结果输出.
+
 #### 3.4.2 并行化思路
 
 我们使用一种序列 - 均值算法的思路.即计算所有记录n和所有中心之间的距离.p个进程,让每一个参与计算的进程处理 n/p条数据.主要步骤如下:
@@ -1097,7 +1102,7 @@ mpic++ -o mpikmean mpikmeanmain.cpp -L/usr/local/lib -lboost_program_options -lb
 运行:
 
 ```
-mpirun -n 8 ./mpikmean --datafile=../testdata/15000points.csv --k=3 --numrun=50
+mpirun -n 4 ./mpikmean --datafile=../testdata/15000points.csv --k=3 --numrun=50
 ```
 运行结果如第一章所示.
 
