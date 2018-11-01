@@ -109,7 +109,7 @@ cd boost_1_68_0
 sh bootstrap.sh
 
 修改project-config.jam 文件
-第19行添加一句:using mpi;
+第24行添加一句:using mpi ;(注意中间的空格)
 
 安装:
 ./bjam --with-program_options --with-mpi install
